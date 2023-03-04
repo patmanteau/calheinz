@@ -1,0 +1,12 @@
+version: "3"
+services:
+  calheinz:
+    image: calheinz:latest
+    restart: unless-stopped
+    environment:
+      # - MODE=normal #supported modes: json-rpc, native, normal
+      #- AUTO_RECEIVE_SCHEDULE=0 22 * * * #enable this parameter on demand (see description below)
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/data
