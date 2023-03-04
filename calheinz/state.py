@@ -9,6 +9,9 @@ import arrow
 from time import sleep
 import apprise
 
+import logging
+log = logging.getLogger("rich")
+
 @dataclass
 class Watch:
     path: Path
@@ -26,6 +29,7 @@ class Watch:
 
     @last_update.setter
     def last_update(self, content):
+        log.info(f'Updating {self.last_update}')
         with open(self.last_update, 'wb') as f:
             f.write(content)
 
@@ -33,9 +37,12 @@ class Watch:
     def from_path(cls, path: Path) -> 'Watch':
         with open(path / 'config.toml', 'r') as f:
             config = parse(f.read())
+        url = config.get('url', str)
+        interval = config.get('interval', int)
+        notify_url = config.get('notify', str)
         apr = apprise.Apprise()
-        apr.add(config.get('notify', str))
-        return cls(path, config.get('url', str), config.get('interval', int), apr)
+        apr.add(notify_url)
+        return cls(path, url, interval, apr)
 
 def read_watches(path: Path) -> list[Watch]:
     return [Watch.from_path(x) for x in path.iterdir() if x.is_dir()]
@@ -47,9 +54,8 @@ def pollqueue(watches: list[Watch]) -> Generator:
         now = arrow.utcnow()
         if next_run > now:
             sleep((next_run - now).total_seconds())
-
-        print(now)
         q.append((arrow.utcnow().shift(minutes=w.interval), w))
+        log.info(f'Polling {w} now')
         yield w
         
 

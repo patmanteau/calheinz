@@ -10,6 +10,14 @@ from io import StringIO
 from state import Watch, read_watches, pollqueue
 import apprise
 
+import logging
+from rich.logging import RichHandler
+FORMAT = "%(message)s"
+logging.basicConfig(
+    level="NOTSET", format=FORMAT, datefmt="[%X]", handlers=[RichHandler()]
+)
+log = logging.getLogger("rich")
+
 from ical import Event, EventList, EventDiff, compare
 
 def is_url(cnd: str) -> bool:
@@ -49,11 +57,14 @@ def diff(lhs: str, rhs: str) -> list[EventDiff]:
 @click.argument('dir',type=click.Path(exists=True, file_okay=False, path_type=pathlib.Path))
 def poll(dir: pathlib.Path, dry_run: bool):
     watches = read_watches(dir)
+    for w in watches:
+        log.info(f'Polling {w.url} every {w.interval} minutes. Config dir is {w.path}')
     for w in pollqueue(watches):
         known_events = EventList.from_file(w.last_update)
         new_events = EventList.from_url(w.url)
         diff_events = compare(known_events, new_events)
         if len(diff_events) > 0:
+            log.debug(f'Found calendar changes: {diff_events}')
             w.apr.notify(body=format_difflist(diff_events))
             print(format_difflist(diff_events))
             if not dry_run:
