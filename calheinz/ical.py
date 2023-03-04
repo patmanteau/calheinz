@@ -9,6 +9,11 @@ env = Environment(
     autoescape=select_autoescape()
 )
 
+def datetime_format(value, format='ddd, DD.MM.YYYY HH:mm ZZZ') -> str:
+    return value.to('Europe/Berlin').format(format, locale='de-de')
+
+env.filters['dtform'] = datetime_format
+
 @dataclass(frozen=True)
 class Event:
     uid: str

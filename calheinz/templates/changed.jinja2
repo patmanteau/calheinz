@@ -1,7 +1,7 @@
 🟡 Terminänderung
 🔥 {% if old.summary == new.summary %}{{old.summary}}{% else %}{{new.summary}} (umbenannt von {{old.summary}}){% endif %}
-🕒 {% if old.start != new.start %}Beginnt {{new.start}} statt {{old.start}}{% else %}{{old.start}}{% endif %}
-🕒 {% if old.end != new.end %}Endet {{new.end}} statt {{old.end}}{% else %}{{old.end}}{% endif %}
+🕒 Beginn {% if old.start != new.start %}{{new.start|dtform}} statt {{old.start|dtform}}{% else %}{{old.start|dtform}}{% endif %}
+🕟 Ende {% if old.end != new.end %}{{new.end|dtform}} statt {{old.end|dtform}}{% else %}{{old.end|dtform}}{% endif %}
 🏫 {% if old.location == new.location %}{{old.location}}{% else %}Neuer Ort ist 
 👉 {{new.location}} 👈
     statt
