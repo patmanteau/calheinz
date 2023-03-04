@@ -3,6 +3,11 @@ import icalendar as ical
 from arrow import Arrow
 import requests
 
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+env = Environment(
+    loader=FileSystemLoader('calheinz/templates'),
+    autoescape=select_autoescape()
+)
 
 @dataclass(frozen=True)
 class Event:
@@ -72,27 +77,37 @@ class EventDiff:
     def formatted(self) -> str:
         match (self.lhs, self.rhs):
             case (None, e) if isinstance(e, Event):
-                return ''.join([
-                    f'---\n',
-                    f'New:\n',
-                    f'{e.formatted()}\n'
-                ])
+                template = env.get_template('new.jinja2')
+                return template.render(e=e)
+                # return ''.join([
+                #     f'---\n',
+                #     f'Neuer Termin:\n',
+                #     f'🔥 {e.summary}\n',
+                #     f'🕒 {e.start} bis {e.end}\n',
+                #     f'🏫 {e.location}\n' if e.location else f'🏫unbestimmt\n'
+                # ])
             case (e, None) if isinstance(e, Event):
-                return ''.join([
-                    f'---\n',
-                    f'Removed:\n',
-                    f'{e.formatted()}\n'    
-                ])
+                template = env.get_template('canceled.jinja2')
+                return template.render(e=e)
+                # return ''.join([
+                #     f'---\n',
+                #     f'Entfallener Termin:\n',
+                #     f'🔥 {e.summary}\n',
+                #     f'🕒 {e.start} bis {e.end}\n',
+                #     f'🏫 {e.location}' if e.location else f'unbestimmt'
+                # ])
             case (old, new) if isinstance(old, Event) and isinstance(new, Event):
-                return ''.join([
-                    f'---\n',
-                    f'Changed: \n',
-                    f'uid: {old.uid}\n',
-                    f'summary: {old.summary} -> {new.summary}\n' if old.summary != new.summary else f'summary: {old.summary}\n',
-                    f'location: {old.location} -> {new.location}\n' if old.location != new.location else f'location: {old.location}\n',
-                    f'start: {old.start} -> {new.start}\n' if old.start != new.start else f'start: {old.start}\n',
-                    f'end: {old.end} -> {new.end}\n' if old.end != new.end else f'end: {old.end}\n'
-                ])
+                template = env.get_template('changed.jinja2')
+                return template.render(old=old, new=new)
+                # return ''.join([
+                #     f'---\n',
+                #     f'Changed: \n',
+                #     f'uid: {old.uid}\n',
+                #     f'summary: {old.summary} -> {new.summary}\n' if old.summary != new.summary else f'summary: {old.summary}\n',
+                #     f'location: {old.location} -> {new.location}\n' if old.location != new.location else f'location: {old.location}\n',
+                #     f'start: {old.start} -> {new.start}\n' if old.start != new.start else f'start: {old.start}\n',
+                #     f'end: {old.end} -> {new.end}\n' if old.end != new.end else f'end: {old.end}\n'
+                # ])
             case _:
                 return ''
 
