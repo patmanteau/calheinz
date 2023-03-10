@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 import icalendar as ical
-from arrow import Arrow
+from arrow import Arrow, now
 import requests
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
@@ -40,7 +40,13 @@ class Event:
             end=end,
         )
 
-    def formatted(self: 'Event') -> str:
+    def ends_before(self, date: Arrow) -> bool:
+        return self.end < date
+
+    def ended(self) -> bool:
+        return self.ends_before(now())
+
+    def formatted(self) -> str:
         return f"""uid: {self.uid}
 summary: {self.summary}
 location: {self.location}
@@ -78,6 +84,15 @@ class EventList:
 class EventDiff:
     lhs: Event | None
     rhs: Event | None
+
+    def expired(self) -> bool:
+        match (self.lhs, self.rhs):
+            case (None, e) if isinstance(e, Event):
+                return e.ended()
+            case (e, None) if isinstance(e, Event):
+                return e.ended()
+            case (old, new) if isinstance(old, Event) and isinstance(new, Event):
+                return old.ended() and new.ended()
 
     def formatted(self) -> str:
         match (self.lhs, self.rhs):
