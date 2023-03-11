@@ -38,7 +38,7 @@ def read(address: str) -> EventList | None:
 
 
 def format_difflist(difflist: list[EventDiff]) -> str:
-    return ''.join([e.formatted() for e in difflist])
+    return ''.join([e.formatted() for e in difflist if not e.expired()])
 
 @click.command()
 @click.argument('lhs')
