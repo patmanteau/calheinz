@@ -43,7 +43,17 @@ def test_diff(calfile_before, calfile_after):
     Test that it captures differences between iCal files
     """
     diffs = compare(calfile_before, calfile_after)
+
+    # all events
     assert (len(diffs)) == 6
+
+    # no expired events:
+    # Feature Request Prokrastibot:
+    # "Termin entfällt" > 5 Monate her nicht mehr notifizieren. Oder
+    # nach 6m-1 Tag aus der eigenen Datenhaltung löschen. Sieht so aus
+    # als würde alles was 6 Monate alt ist aus dem Kalender entfernt
+    # werden, siehe notifications heute, gestern.
+    assert len([d for d in diffs if not d.expired()]) == 3
 
 
 @pytest.fixture
