@@ -1,7 +1,7 @@
 import pytest
 from arrow import Arrow
 
-from ical import Event, EventList
+from ical import Event, EventList, compare
 
 
 def test_ended():
@@ -31,15 +31,33 @@ def test_ended():
     assert not event.ended()
 
 
-def test_from_file(calfile_a):
+def test_from_file(calfile_large):
     """
     Test that it parses iCal files.
     """
-    assert len(calfile_a.events) == 51
+    assert len(calfile_large.events) == 51
+
+
+def test_diff(calfile_before, calfile_after):
+    """
+    Test that it captures differences between iCal files
+    """
+    diffs = compare(calfile_before, calfile_after)
+    assert (len(diffs)) == 6
 
 
 @pytest.fixture
-def calfile_a() -> EventList:
+def calfile_large() -> EventList:
     return EventList.from_file(
         "tests/integration/fixtures/campus-termine-2022-10-31.ics"
     )
+
+
+@pytest.fixture
+def calfile_before() -> EventList:
+    return EventList.from_file("tests/integration/fixtures/before.ics")
+
+
+@pytest.fixture
+def calfile_after() -> EventList:
+    return EventList.from_file("tests/integration/fixtures/after.ics")
