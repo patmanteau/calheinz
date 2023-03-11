@@ -1,0 +1,9 @@
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]
+pythonpath = "calheinz"
+
+[tool.isort]
+profile = "black"
+src_paths = ["calheinz", "tests"]
