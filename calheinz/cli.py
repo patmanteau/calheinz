@@ -1,26 +1,18 @@
-import difflib
 import logging
 import pathlib
 import re
-from dataclasses import dataclass, field
-from io import StringIO
 
-import apprise
 import click
-import icalendar as ical
-import requests as req
-from arrow import Arrow
 from rich.logging import RichHandler
 
-from state import Watch, pollqueue, read_watches
+from ical import EventDiff, EventList, compare
+from state import pollqueue, read_watches
 
 FORMAT = "%(message)s"
 logging.basicConfig(
     level="NOTSET", format=FORMAT, datefmt="[%X]", handlers=[RichHandler()]
 )
 log = logging.getLogger("rich")
-
-from ical import Event, EventDiff, EventList, compare
 
 
 def is_url(cnd: str) -> bool:

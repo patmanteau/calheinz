@@ -77,7 +77,10 @@ class EventList:
     @classmethod
     def from_bytes(cls, b) -> "EventList":
         ecal = ical.Calendar.from_ical(b)
-        return cls([Event.from_vevent(x) for x in ecal.walk() if x.name == "VEVENT"], b)
+        return cls(
+            events=[Event.from_vevent(x) for x in ecal.walk() if x.name == "VEVENT"],
+            raw=b,
+        )
 
     @classmethod
     def from_url(cls, url: str) -> "EventList":
