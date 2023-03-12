@@ -5,7 +5,7 @@ import re
 import click
 from rich.logging import RichHandler
 
-from ical import EventDiff, EventList, compare
+from ical import EventDiff, EventList, compare, format_diffs
 from state import pollqueue, read_watches
 
 FORMAT = "%(message)s"
@@ -36,10 +36,6 @@ def read(address: str) -> EventList | None:
     )
 
 
-def format_difflist(difflist: list[EventDiff]) -> str:
-    return "".join([e.formatted() for e in difflist if not e.expired()])
-
-
 @click.command()
 @click.argument("lhs")
 @click.argument("rhs")
@@ -48,7 +44,7 @@ def diff(lhs: str, rhs: str) -> list[EventDiff]:
     rhs_events = EventList.from_url(rhs) if is_url(rhs) else EventList.from_file(rhs)
 
     diff_events = compare(lhs_events, rhs_events)
-    print(format_difflist(diff_events))
+    print(format_diffs(diff_events))
     return diff_events
 
 
@@ -67,8 +63,8 @@ def poll(dir: pathlib.Path, dry_run: bool):
         diff_events = compare(known_events, new_events)
         if len(diff_events) > 0:
             log.debug(f"Found calendar changes: {diff_events}")
-            w.apr.notify(body=format_difflist(diff_events))
-            print(format_difflist(diff_events))
+            w.apr.notify(body=format_diffs(diff_events))
+            print(format_diffs(diff_events))
             if not dry_run:
                 w.last_update = new_events.raw
 

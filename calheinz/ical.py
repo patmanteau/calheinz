@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 
 import icalendar as ical
@@ -100,32 +101,51 @@ class EventList:
 
 
 @dataclass(frozen=True)
-class EventDiff:
-    lhs: Event | None
-    rhs: Event | None
+class EventDiff(ABC):
+    @abstractmethod
+    def expired(self) -> bool:
+        return self.event.ended()
+
+    @abstractmethod
+    def formatted(self) -> str:
+        return NotImplemented
+
+
+@dataclass(frozen=True)
+class CanceledEvent(EventDiff):
+    event: Event
 
     def expired(self) -> bool:
-        match (self.lhs, self.rhs):
-            case (None, e) if isinstance(e, Event):
-                return e.ended()
-            case (e, None) if isinstance(e, Event):
-                return e.ended()
-            case (old, new) if isinstance(old, Event) and isinstance(new, Event):
-                return old.ended() and new.ended()
+        return super().expired()
 
     def formatted(self) -> str:
-        match (self.lhs, self.rhs):
-            case (None, e) if isinstance(e, Event):
-                template = env.get_template("new.jinja2")
-                return template.render(e=e)
-            case (e, None) if isinstance(e, Event):
-                template = env.get_template("canceled.jinja2")
-                return template.render(e=e)
-            case (old, new) if isinstance(old, Event) and isinstance(new, Event):
-                template = env.get_template("changed.jinja2")
-                return template.render(old=old, new=new)
-            case _:
-                return ""
+        template = env.get_template("canceled.jinja2")
+        return template.render(e=self.event)
+
+
+@dataclass(frozen=True)
+class NewEvent(EventDiff):
+    event: Event
+
+    def expired(self) -> bool:
+        return super().expired()
+
+    def formatted(self) -> str:
+        template = env.get_template("new.jinja2")
+        return template.render(e=self.event)
+
+
+@dataclass(frozen=True)
+class ChangedEvent(EventDiff):
+    event: Event
+    new_event: Event
+
+    def expired(self) -> bool:
+        return self.event.ended() and self.new_event.ended()
+
+    def formatted(self) -> str:
+        template = env.get_template("changed.jinja2")
+        return template.render(old=self.event, new=self.new_event)
 
 
 def compare(lhs: EventList, rhs: EventList) -> list[EventDiff]:
@@ -149,9 +169,13 @@ def compare(lhs: EventList, rhs: EventList) -> list[EventDiff]:
     # lookup tables to build (old, new) tuples
     lhs_dict = {e.uid: e for e in lhs.events}
     rhs_dict = {e.uid: e for e in rhs.events}
-    added_events = [EventDiff(None, rhs_dict[u]) for u in added_uids]
-    removed_events = [EventDiff(lhs_dict[u], None) for u in removed_uids]
-    changed_events = [EventDiff(lhs_dict[u], rhs_dict[u]) for u in changed_uids]
+    added_events = [NewEvent(rhs_dict[u]) for u in added_uids]
+    removed_events = [CanceledEvent(lhs_dict[u]) for u in removed_uids]
+    changed_events = [ChangedEvent(lhs_dict[u], rhs_dict[u]) for u in changed_uids]
 
     # roll them into one list
     return [*added_events, *removed_events, *changed_events]
+
+
+def format_diffs(diffs: list[EventDiff]) -> str:
+    return "".join([e.formatted() for e in diffs if not e.expired()])
