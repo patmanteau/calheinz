@@ -1,7 +1,7 @@
 import pytest
 from arrow import Arrow
 
-from ical import Event, EventList, compare
+from ical import Event, EventDiff, EventList, compare, format_diffs
 
 
 def test_ended():
@@ -38,12 +38,10 @@ def test_from_file(calfile_large):
     assert len(calfile_large.events) == 51
 
 
-def test_diff(calfile_before, calfile_after):
+def test_diff(diffs):
     """
     Test that it captures differences between iCal files
     """
-    diffs = compare(calfile_before, calfile_after)
-
     # all events
     assert (len(diffs)) == 6
 
@@ -56,11 +54,42 @@ def test_diff(calfile_before, calfile_after):
     assert len([d for d in diffs if not d.expired()]) == 3
 
 
+def test_format(diffs):
+    """
+    Test that it formats lists of diffs
+    """
+    assert (
+        format_diffs(diffs)
+        == """🟢 Neuer Termin
+🔥 Test Event - new and upcoming
+🕒 Mi, 15.09.2032 12:00 CEST bis Mi, 15.09.2032 13:00 CEST
+🏫 Muster Weg  456, 50123 Köln, K - Muster Hochschule für neue Termine, Kalender und Bots, Raum: K/HTKB 1.23
+〰
+🔴 Termin entfällt
+🔥 Test Event - removed and upcoming
+🕒 Mi, 15.09.2032 15:00 CEST bis Mi, 15.09.2032 16:00 CEST
+🏫 Muster Weg  456, 50123 Köln, K - Muster Hochschule für entfernte Termine, Kalender und Bots, Raum: K/HTKB 1.23
+〰
+🟡 Terminänderung
+🔥 Test Event - changed and upcoming, after (umbenannt von Test Event - changed and upcoming, before)
+🕒 Beginn verlegt auf Do, 16.09.2032 18:00 CEST (von Mi, 15.09.2032 18:00 CEST)
+🕟 Ende verlegt auf Do, 16.09.2032 19:00 CEST (von Mi, 15.09.2032 19:00 CEST)
+🏫 Verlegt nach 👉 Muster Weg  789, 50123 Köln, K - Muster Hochschule für geänderte Termine, Kalender und Bots, Raum: K/HTKB 1.78 👈 (ursprünglich Muster Weg  456, 50123 Köln, K - Muster Hochschule für geänderte Termine, Kalender und Bots, Raum: K/HTKB 1.23)
+〰
+"""
+    )
+
+
 @pytest.fixture
 def calfile_large() -> EventList:
     return EventList.from_file(
         "tests/integration/fixtures/campus-termine-2022-10-31.ics"
     )
+
+
+@pytest.fixture
+def diffs(calfile_before, calfile_after) -> list[EventDiff]:
+    return compare(calfile_before, calfile_after)
 
 
 @pytest.fixture
