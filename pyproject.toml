@@ -7,3 +7,37 @@ pythonpath = "calheinz"
 [tool.isort]
 profile = "black"
 src_paths = ["calheinz", "tests"]
+
+[tool.poetry]
+name = "calheinz"
+version = "0.1.0"
+description = "An iCal update notifier"
+authors = ["Patrick Haas <patmanteau@posteo.de>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+apprise = "^1.4.5"
+arrow = "^1.2.3"
+attrs = "^23.1.0"
+requests = "^2.31.0"
+fastapi = "^0.101.1"
+click = "^8.1.7"
+rich = "^13.5.2"
+icalendar = "^5.0.7"
+jinja2 = "^3.1.2"
+tomlkit = "^0.12.1"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.7.0"
+flake8 = "^6.1.0"
+isort = "^5.12.0"
+
+
+[tool.poetry.group.test.dependencies]
+pytest = "^7.4.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
