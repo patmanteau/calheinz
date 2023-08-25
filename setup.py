@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 setup(
     name="calheinz",
     version="0.0.1",
-    description="An iCal change detector",
+    description="An iCal update notifier",
     packages=["calheinz"],
     package_dir={"calheinz": "calheinz"},
     include_package_data=True,
